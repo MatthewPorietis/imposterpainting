@@ -5,6 +5,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 
 const PORT = process.env.PORT || 3000;
+const MIN_PLAYERS = 3;
 const MAX_PLAYERS = 4;
 const COUNTDOWN_SECONDS = 5;
 const REVEAL_AUTO_RETURN_SECONDS = 20;
@@ -129,7 +130,9 @@ function startDrawingPhase(room) {
 
 function startVotingPhase(room) {
   room.state = "voting";
-  room.votes = new Map();
+  // Note: votes are intentionally NOT reset here - players can vote at any
+  // time starting from the drawing phase, so votes cast early must carry
+  // over into the voting phase rather than being wiped.
   const duration = room.settings.guessTime;
   const endsAt = Date.now() + duration * 1000;
 
@@ -229,8 +232,8 @@ io.on("connection", (socket) => {
   socket.on("start-game", () => {
     const room = getRoom(socket);
     if (!room || room.hostId !== socket.id) return;
-    if (room.players.size !== MAX_PLAYERS) {
-      return socket.emit("error-msg", { message: `Need exactly ${MAX_PLAYERS} players to start.` });
+    if (room.players.size < MIN_PLAYERS) {
+      return socket.emit("error-msg", { message: `Need at least ${MIN_PLAYERS} players to start.` });
     }
     if (room.state !== "lobby") return;
     startDrawingPhase(room);
@@ -244,7 +247,7 @@ io.on("connection", (socket) => {
 
   socket.on("cast-vote", ({ targetId }) => {
     const room = getRoom(socket);
-    if (!room || room.state !== "voting") return;
+    if (!room || (room.state !== "drawing" && room.state !== "voting")) return;
     if (room.votes.has(socket.id)) return; // no changing votes
     if (!room.players.has(targetId)) return;
     room.votes.set(socket.id, targetId);
