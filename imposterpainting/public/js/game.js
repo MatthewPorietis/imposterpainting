@@ -404,8 +404,9 @@
     gameState = data.phase;
     if (data.phase === "voting") {
       document.getElementById("phase-label").textContent = "FIND THE IMPOSTER";
-      document.getElementById("word-display").textContent = "Who faked it?";
-      document.getElementById("word-display").classList.remove("imposter");
+      const wordEl = document.getElementById("word-display");
+      wordEl.textContent = data.word;
+      wordEl.classList.remove("imposter");
       document.getElementById("vote-instructions").classList.remove("hidden");
       document.getElementById("toolbar").classList.add("hidden");
       setVotable(true);
@@ -425,7 +426,7 @@
   }
 
   function onAvatarClick(targetId) {
-    if (gameState !== "voting" || myVoteCast) return;
+    if ((gameState !== "drawing" && gameState !== "voting") || myVoteCast) return;
     myVoteCast = true;
     socket.emit("cast-vote", { targetId });
     const el = document.querySelector(`.vote-target[data-player-id="${targetId}"]`);
