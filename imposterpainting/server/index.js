@@ -136,7 +136,7 @@ function startVotingPhase(room) {
   const duration = room.settings.guessTime;
   const endsAt = Date.now() + duration * 1000;
 
-  io.to(room.code).emit("phase-change", { phase: "voting", duration, endsAt });
+  io.to(room.code).emit("phase-change", { phase: "voting", duration, endsAt, word: room.word });
 
   clearPhaseTimer(room);
   room.phaseTimer = setTimeout(() => startCountdown(room), duration * 1000);
