@@ -2,3 +2,53 @@
 # Lines starting with # are ignored.
 # Keep words appropriate - all 3 non-imposter players will be asked to draw this.
 # If this file is empty, the game falls back to a small built-in default list.
+coyote
+ferry
+hero
+apple pie
+pop
+pen
+starfish
+swimming pool
+stain
+dustpan
+plate
+farmer
+safety goggles
+cotton candy
+waffle
+museum
+trophy
+snowboarding
+chalk
+scientist
+sunglasses
+zipper
+restaurant
+fairies
+lawnmower
+colored pencil
+squirt gun
+eel
+collar
+stomach
+princess
+scale
+fox
+television
+platypus
+tongue
+fax
+fishing pole
+empty
+race car
+saxophone
+straw
+round
+ambulance
+happy
+parka
+shallow
+frog
+trumpet
+mirror
