@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Whodunit Doodle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<div class="stage">
+
+  <!-- MAIN MENU -->
+  <section id="screen-menu" class="screen active">
+    <div class="menu-card">
+      <p class="eyebrow">4 draw. 1 fakes it.</p>
+      <h1 class="logo">Whodunit<span class="logo-dot">Doodle</span></h1>
+      <p class="tagline">Three players get the word. One doesn't. Everyone draws it live &mdash; can you spot the fraud?</p>
+      <div class="menu-actions">
+        <button id="btn-host" class="btn btn-primary">Host Game</button>
+        <button id="btn-join" class="btn btn-secondary">Join Game</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- NAME + PROFILE PIC -->
+  <section id="screen-name" class="screen">
+    <div class="menu-card">
+      <button class="btn-back" id="name-back">&larr; back</button>
+      <h2 id="name-heading" class="section-title">Who's drawing?</h2>
+
+      <div id="join-code-field" class="field hidden">
+        <label for="input-code">Lobby code</label>
+        <input id="input-code" maxlength="5" placeholder="ABCDE" autocomplete="off" class="input input-code" />
+      </div>
+
+      <div class="field">
+        <label for="input-name">Your name</label>
+        <input id="input-name" maxlength="16" placeholder="Enter a name" autocomplete="off" class="input" />
+      </div>
+
+      <div class="field">
+        <label>Pick an avatar</label>
+        <div id="avatar-grid" class="avatar-grid"></div>
+      </div>
+
+      <p id="name-error" class="error-text hidden"></p>
+      <button id="btn-continue" class="btn btn-primary btn-block">Continue</button>
+    </div>
+  </section>
+
+  <!-- LOBBY -->
+  <section id="screen-lobby" class="screen">
+    <div class="lobby-wrap">
+      <div class="case-tag">
+        <span class="case-tag-eyebrow">Lobby Code</span>
+        <span id="lobby-code" class="case-tag-code">-----</span>
+      </div>
+
+      <div class="lobby-grid">
+        <div class="lobby-players">
+          <h3 class="section-title small">Players <span id="player-count">(0/4)</span></h3>
+          <div id="lobby-player-list" class="lobby-player-list"></div>
+        </div>
+
+        <div class="lobby-settings">
+          <h3 class="section-title small">Settings</h3>
+          <div class="setting-row">
+            <label for="setting-draw">Drawing time</label>
+            <div class="setting-control">
+              <input type="range" id="setting-draw" min="15" max="180" step="5" value="60" />
+              <span id="setting-draw-val" class="setting-val">60s</span>
+            </div>
+          </div>
+          <div class="setting-row">
+            <label for="setting-guess">Guessing time</label>
+            <div class="setting-control">
+              <input type="range" id="setting-guess" min="10" max="120" step="5" value="30" />
+              <span id="setting-guess-val" class="setting-val">30s</span>
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <div class="toggle-row">
+              <label for="setting-similar-mode" class="toggle-label">
+                Similar Mode
+                <span class="setting-hint">Imposter gets a related word instead of nothing</span>
+              </label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="setting-similar-mode" />
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="setting-row" id="similarity-row">
+            <label>Similarity</label>
+            <div class="segmented" id="similarity-segmented">
+              <button type="button" class="segmented-btn" data-value="low">Low</button>
+              <button type="button" class="segmented-btn" data-value="medium">Medium</button>
+              <button type="button" class="segmented-btn" data-value="high">High</button>
+            </div>
+          </div>
+
+          <div class="setting-row" id="blind-imposter-row">
+            <div class="toggle-row">
+              <label for="setting-blind-imposter" class="toggle-label">
+                Blind Imposter
+                <span class="setting-hint">Imposter isn't told they're the imposter \u2014 they just see a word, like everyone else</span>
+              </label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="setting-blind-imposter" />
+                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              </label>
+            </div>
+          </div>
+
+          <p id="settings-locked-note" class="dim-note hidden">Only the host can change settings.</p>
+        </div>
+      </div>
+
+      <p id="lobby-status" class="dim-note center">Waiting for 4 players&hellip;</p>
+      <button id="btn-start" class="btn btn-primary btn-block" disabled>Start Game</button>
+      <button id="btn-leave-lobby" class="btn btn-text">Leave lobby</button>
+    </div>
+  </section>
+
+  <!-- GAME (drawing + voting share this layout) -->
+  <section id="screen-game" class="screen">
+    <div class="game-topbar">
+      <div class="word-banner">
+        <span id="phase-label" class="phase-label">DRAW THE WORD</span>
+        <span id="word-display" class="word-display">&mdash;</span>
+      </div>
+      <div class="timer-wrap">
+        <div id="timer-ring" class="timer-ring">
+          <span id="timer-num">60</span>
+        </div>
+      </div>
+    </div>
+
+    <p id="vote-instructions" class="dim-note center hidden">The word is revealed &mdash; imposter, time to talk your way out of it. Tap a face to vote them out. Choose wisely, you can't take it back.</p>
+
+    <div id="canvas-grid" class="canvas-grid"></div>
+
+    <div id="toolbar" class="toolbar">
+      <div id="color-palette" class="color-palette"></div>
+      <div class="tool-buttons">
+        <button id="tool-pencil" class="tool-btn active" title="Pencil">&#9998;</button>
+        <button id="tool-eraser" class="tool-btn" title="Eraser">&#9003;</button>
+      </div>
+      <div class="thickness-control">
+        <label for="thickness">Size</label>
+        <input type="range" id="thickness" min="2" max="28" value="6" />
+      </div>
+    </div>
+  </section>
+
+  <!-- COUNTDOWN -->
+  <section id="screen-countdown" class="screen">
+    <div class="countdown-wrap">
+      <p class="eyebrow">Votes are locked in</p>
+      <div id="countdown-num" class="countdown-num">5</div>
+      <p class="dim-note">Revealing the imposter&hellip;</p>
+    </div>
+  </section>
+
+  <!-- REVEAL -->
+  <section id="screen-reveal" class="screen">
+    <div class="reveal-wrap">
+      <p id="reveal-verdict" class="reveal-verdict">&nbsp;</p>
+      <div class="reveal-imposter">
+        <div id="reveal-avatar" class="reveal-avatar"></div>
+        <p id="reveal-name" class="reveal-name">&nbsp;</p>
+        <p class="reveal-sub">was the imposter</p>
+      </div>
+      <p class="reveal-word">The word was <strong id="reveal-word">&mdash;</strong></p>
+      <p id="reveal-imposter-word" class="reveal-word hidden">The imposter secretly drew <strong id="reveal-imposter-word-val">&mdash;</strong></p>
+
+      <div id="reveal-votes" class="reveal-votes"></div>
+
+      <button id="btn-back-to-lobby" class="btn btn-primary btn-block hidden">Back to Lobby</button>
+      <p id="reveal-wait-note" class="dim-note center hidden">Waiting for host to return to lobby&hellip;</p>
+    </div>
+  </section>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/sound.js"></script>
+<script src="/js/game.js"></script>
+</body>
+</html>

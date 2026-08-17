@@ -1,0 +1,4 @@
+# One word (or short phrase) per line.
+# Lines starting with # are ignored.
+# Keep words appropriate - all 3 non-imposter players will be asked to draw this.
+# If this file is empty, the game falls back to a small built-in default list.
