@@ -167,11 +167,17 @@
   socket.on("joined", ({ code }) => { roomCode = code; });
 
   // ---------- lobby ----------
+  let knownPlayerIds = [];
   socket.on("lobby-update", (data) => {
     roomCode = data.code;
     players = data.players;
     settings = data.settings;
     isHost = data.hostId === myId;
+
+    const newIds = players.map((p) => p.id);
+    const newcomers = newIds.filter((id) => !knownPlayerIds.includes(id));
+    if (knownPlayerIds.length > 0 && newcomers.length > 0) Sound.join();
+    knownPlayerIds = newIds;
 
     document.getElementById("lobby-code").textContent = roomCode;
     document.getElementById("player-count").textContent = `(${players.length}/4)`;
@@ -211,11 +217,20 @@
 
     const startBtn = document.getElementById("btn-start");
     startBtn.classList.toggle("hidden", !isHost);
-    startBtn.disabled = players.length !== 4;
-    document.getElementById("lobby-status").textContent =
-      players.length === 4
-        ? (isHost ? "All 4 players are in \u2014 start whenever you're ready." : "All 4 players are in. Waiting for the host to start\u2026")
-        : `Waiting for ${4 - players.length} more player${4 - players.length === 1 ? "" : "s"}\u2026`;
+    startBtn.disabled = players.length < 3;
+
+    let statusText;
+    if (players.length < 3) {
+      const need = 3 - players.length;
+      statusText = `Waiting for ${need} more player${need === 1 ? "" : "s"} (need at least 3)\u2026`;
+    } else if (players.length === 4) {
+      statusText = isHost ? "Room is full \u2014 start whenever you're ready." : "Room is full. Waiting for the host to start\u2026";
+    } else {
+      statusText = isHost
+        ? "Ready to start with 3, or wait for a 4th player."
+        : "Ready to start. Waiting for the host\u2026";
+    }
+    document.getElementById("lobby-status").textContent = statusText;
 
     showScreen("screen-lobby");
   });
@@ -376,12 +391,13 @@
       wordEl.textContent = data.word;
       wordEl.classList.remove("imposter");
     }
-    document.getElementById("vote-instructions").classList.add("hidden");
+    document.getElementById("vote-instructions").classList.remove("hidden");
     document.getElementById("toolbar").classList.remove("hidden");
-    setVotable(false);
+    setVotable(true);
 
     showScreen("screen-game");
     startTimer(data.endsAt, data.duration);
+    Sound.gameStart();
   });
 
   socket.on("phase-change", (data) => {
@@ -392,7 +408,6 @@
       document.getElementById("word-display").classList.remove("imposter");
       document.getElementById("vote-instructions").classList.remove("hidden");
       document.getElementById("toolbar").classList.add("hidden");
-      document.querySelectorAll(".voted-badge").forEach((b) => b.classList.add("hidden"));
       setVotable(true);
       startTimer(data.endsAt, data.duration);
     } else if (data.phase === "countdown") {
@@ -421,18 +436,21 @@
   socket.on("player-voted", ({ voterId, votedCount, totalPlayers }) => {
     const badge = document.getElementById(`voted-badge-${voterId}`);
     if (badge) badge.classList.remove("hidden");
-    document.getElementById("phase-label").textContent = `FIND THE IMPOSTER \u2014 ${votedCount}/${totalPlayers} voted`;
+    document.getElementById("phase-label").textContent = `${votedCount}/${totalPlayers} voted`;
+    Sound.vote();
   });
 
   function runCountdown(seconds) {
     let n = seconds;
     const el = document.getElementById("countdown-num");
     el.textContent = n;
+    Sound.tick();
     clearInterval(window.__countdownInterval);
     window.__countdownInterval = setInterval(() => {
       n -= 1;
       if (n <= 0) { clearInterval(window.__countdownInterval); return; }
       el.textContent = n;
+      Sound.tick();
     }, 1000);
   }
 
@@ -445,9 +463,11 @@
     if (data.imposterCaught) {
       verdictEl.textContent = "\ud83d\udd75\ufe0f The faithful win!";
       verdictEl.className = "reveal-verdict caught";
+      Sound.win();
     } else {
       verdictEl.textContent = "\ud83c\udfad The imposter got away with it!";
       verdictEl.className = "reveal-verdict escaped";
+      Sound.lose();
     }
 
     document.getElementById("reveal-avatar").innerHTML = "";
@@ -499,12 +519,17 @@
     clearTimeout(phaseTimeoutHandle);
     const ring = document.getElementById("timer-ring");
     const numEl = document.getElementById("timer-num");
+    let warned10 = false;
 
     function tick() {
       const remainingMs = endsAt - Date.now();
       const remaining = Math.max(0, Math.ceil(remainingMs / 1000));
       numEl.textContent = remaining;
       ring.classList.toggle("low", remaining <= 10);
+      if (remaining <= 10 && !warned10) {
+        warned10 = true;
+        Sound.tick();
+      }
       if (remainingMs > 0) {
         phaseTimeoutHandle = setTimeout(tick, 250);
       }
